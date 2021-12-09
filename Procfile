@@ -1,2 +1,2 @@
-web: gunicorn application:app --log-file=-
+web: gunicorn hello:app --preload
 worker: python3 test.py
