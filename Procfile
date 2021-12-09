@@ -1,2 +1,2 @@
-web: gunicorn app:app --preload
-worker: python3 app.py
+web: gunicorn application:app --preload
+worker: python3 test.py
