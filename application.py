@@ -243,4 +243,4 @@ def sim_user():
         return "bad data"
 
 if __name__ == "__main__":
-    application.run(debug = True)
+    application.run(debug = True,host = "0.0.0.0")
