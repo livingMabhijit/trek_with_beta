@@ -24,31 +24,31 @@ df = pd.read_csv('City_data1.csv')
 user_inputs = []
 
 
-@application.route("/")
+@application.route("/") # root route
 def home():
     del user_inputs[:]
     return render_template('index.html')
 
-@application.route('/bestMatch', methods = ['GET','POST'])
+@application.route('/bestMatch', methods = ['GET','POST']) #best matched cities with word vectors similarity route
 def best_match():
     search_string = request.args.get('q')
     ## start ##
     
-    df['out'] = df['sights']+df['desc']
+    df['out'] = df['sights']+df['desc']+df['Best_time'] # update version 5 using descriptiona and sights 
 
     text_list = df.desc.str.lower().values
     tok_text=[] # for our tokenised corpus
-    #Tokenising using SpaCy:
-    for doc in tqdm(nlp.pipe(text_list, disable=["tagger", "parser","ner"])):
+   
+    for doc in tqdm(nlp.pipe(text_list, disable=["tagger", "parser","ner"])): # controller pipeline
         tok = [t.text for t in doc if t.is_alpha]
         tok_text.append(tok)
-    bm25 = BM25Okapi(tok_text)
+    bm25 = BM25Okapi(tok_text) #vector search
     tokenized_query = str(search_string).lower().split(" ")
   
     t0 = time.time()
-    results = bm25.get_top_n(tokenized_query, df.desc.values, n=6)
+    results = bm25.get_top_n(tokenized_query, df.desc.values, n=6) #search result fixed at 6 for now
     t1 = time.time()
-    print(f'Searched 50,000 records in {round(t1-t0,3) } seconds \n')
+    print(f'{round(t1-t0,3) } seconds \n')
 
     cities = []
     countries = []
@@ -69,24 +69,16 @@ def best_match():
     ## end ##
     
     return render_template('best_match.html',results = results,cities = cities,countries = countries, imgs=imgs,sights = sights,bts = bts)
-    # return str(sights)
+  
 
-@application.route('/sim_city', methods = ['GET','POST'])
+@application.route('/sim_city', methods = ['GET','POST']) #similar city matcher route
 def similar_cities():
-    # df = pd.read_csv('City_data1.csv')
-    
     
     input1 =  request.args.get('place1')
     input1 = input1.split(',')
     input1 = [i.strip().capitalize() for i in input1]
     print(input1)
     user_inputs.extend(input1)
-    # input2 =  request.args.get('place2')
-    # input2 = input2.capitalize()
-    # user_inputs.append(input2)
-    # input3 =  request.args.get('place3')
-    # input3 = input3.capitalize()
-    # user_inputs.append(input3)
 
     df1 = df[['city','beach','mountain','history','food','city_life','countryside','nightlife','couple_friendly','outdoor','spiritual']]
     df2 = df1.set_index('city').T.to_dict('list')
@@ -107,13 +99,13 @@ def similar_cities():
             self.vector = vector.astype('float32')
             self.labels = labels
 
-        def build(self, number_of_trees=5):
+        def build(self, number_of_trees=5): # test 5 **fix for now
             self.index = annoy.AnnoyIndex(self.dimention)
             for i, vec in enumerate(self.vector):
                 self.index.add_item(i, vec.tolist())
             self.index.build(number_of_trees)
             
-        def query(self, vector, k=10):
+        def query(self, vector, k=10): # K  = 10 similarity match 95%
             indices = self.index.get_nns_by_vector(vector.tolist(), k)
             return [self.labels[i] for i in indices]
     index = AnnoyIndex(data["vector"], data["name"])
@@ -136,10 +128,6 @@ def similar_cities():
     place_set = list(set(place_set))
     
     
-    
-    
-    # simlar_place_names = [place for place in simlar_place_names]
-    # print(simlar_place_names)
     my_dest = str(place_set)
     cities = []
     countries = []
@@ -162,29 +150,15 @@ def similar_cities():
         bt = df[df['city']==str(i)]['Best_time'].iloc[0]
         bts.append(bt)
 
-    # print(simlar_place_names.split('*'))
-    return render_template('sim_city.html',place_name = place_name,cities = cities,countries = countries, imgs=imgs,descrs = descrs,sights = sights,bts = bts)#,countries = countries, imgs=imgs)simlar_place_names = simlar_place_names,
-    # return cities
+
+    return render_template('sim_city.html',place_name = place_name,cities = cities,countries = countries, imgs=imgs,descrs = descrs,sights = sights,bts = bts)
 
 
-
-
-@application.route('/about', methods = ['GET'])
+@application.route('/about', methods = ['GET']) #About page route
 def abouts():
     return render_template('about.html')
 
-# @app.route('/sights', methods = ['GET'])
-# def sights():
-#     return city#render_template('sights.html')
-
-# @application.route('/test', methods = ['GET'])
-# def test():
-#     return render_template('test.html')
-
-
-
-
-@application.route("/sim_user")
+@application.route("/sim_user") #Associated user/city search route
 def sim_user():
     if user_inputs is not None:
         try:
@@ -211,19 +185,10 @@ def sim_user():
 
             fpGrowth = FPGrowth(itemsCol="places", minSupport=0.05, minConfidence=0.05)
             model = fpGrowth.fit(df2)
-            # fpm = model.freqItemsets
-
-            # assc_mod = model.associationRules
-            # tra_mod = model.transform(df2)
-            # tra_mod.show()
 
             df3 = spark.createDataFrame(
-                [(1, "Abhi",str(user_inputs[0])),(2, "Abhi",str(user_inputs[1])),(3, "Abhi",str(user_inputs[2]))],["id", "user","places"]  
-            )
-
-            # df3
+                [(1, "Abhi",str(user_inputs[0])),(2, "Abhi",str(user_inputs[1])),(3, "Abhi",str(user_inputs[2]))],["id", "user","places"])
             df4 = df3.groupBy('user').agg(F.collect_set('places').alias('places'))
-            # df4.show(truncate=False)
             pred = model.transform(df4)
             result = pred.collect()
             result = result[0][2]
@@ -242,5 +207,6 @@ def sim_user():
         # return render_template('test.html')
         return "bad data"
 
+
 if __name__ == "__main__":
-    application.run(debug = True)
+    application.run(debug = True,host="0.0.0.0")
