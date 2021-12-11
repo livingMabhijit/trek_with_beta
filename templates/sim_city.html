@@ -1,6 +1,6 @@
 <a href = '/'>
     <img src="{{url_for('static', filename='logo2.png')}}" style="padding-left:10px" ></a>
-<h3 class="text-center"> Here are some destinations similar to your visited places !!!</h3>
+<h3 class="text-center"> Here are some destinations similar to your given visited places like {{user_inputs[0]}}, {{user_inputs[1]}}, {{user_inputs[2]}}.. !!!</h3>
 
 
 <html>
@@ -23,8 +23,6 @@
         <div class="container">
         
             {% for i in range (0,10) %}
-        <!-- <div class = card ></div> -->
-        <!-- onclick="location.href='/sights';" style="cursor: pointer;" -->
             <div class ="container">
                 <h2>{{   cities[i]     }}</h2>
                 <h4>{{countries[i]}}</h4>
@@ -47,11 +45,6 @@
                     </div>
 
                 </div>    
-
-
-
-
-                <!-- <p><img   src= {{imgs[i]}}  width = 30% height = 30% > </p> -->
                 <p>{{ descrs[i] }}</p>
                 <h4> Best time to visit</h4>
                 <p>{{ bts[i] }}</p>
@@ -62,9 +55,12 @@
         </div>
 
         <a class="btn btn-primary" href="/bestMatch" role="button" >Go back</a>
-        <a class="btn btn-primary" href="/sim_user" role="button" >Associated places</a>
+        <a class="btn btn-primary disabled" href="/sim_user" role="button" >Associated places</a>
+        <h5>* Associated places - Beta feature is being disabled for public access</h5>
     </body>
 </html>
+
+
 
 
 
